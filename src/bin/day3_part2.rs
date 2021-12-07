@@ -9,7 +9,7 @@ fn main() {
 
     println!("{}", diagnostic_report);
 
-    let result = calculate_power_consumption(&diagnostic_report);
+    let result = calculate_oxygen_generator_rating(&diagnostic_report) * calculate_co2_scrubber_rating(&diagnostic_report);
 
     println!("Final result: {}", result);
 }
@@ -79,16 +79,19 @@ fn calculate_co2_scrubber_rating(report: &str) -> u32 {
         .collect_vec();
     let line_width = report.lines().next().unwrap().len() as u32;
 
-    let accumulator = accumulate_bit_counts(line_width, &data);
+    for i in (0..line_width).rev() {
+        let accumulator = accumulate_bit_counts(line_width, &data);
 
-    for (i, count) in accumulator.iter().enumerate() {
+        let count = accumulator[i as usize];
         data.retain(|&x| {
             let bit = x >> i & 1;
-            bit == if *count >= 0 { 1 } else { 0 }
+            bit == if count < 0 { 1 } else { 0 }
         });
-        debug_data(i, &data);
+        debug_data(i as usize, &data);
+        if data.len() == 1 {
+            break;
+        }
     }
-
     if data.len() != 1 {
         panic!("Bad reduction, should only have one result remaining!");
     } else {
@@ -103,14 +106,18 @@ fn calculate_oxygen_generator_rating(report: &str) -> u32 {
         .collect_vec();
     let line_width = report.lines().next().unwrap().len() as u32;
 
-    let accumulator = accumulate_bit_counts(line_width, &data);
-
-    for (i, count) in accumulator.iter().enumerate() {
+    for i in (0..line_width).rev() {
+        let accumulator = accumulate_bit_counts(line_width, &data);
+        let count = accumulator[i as usize];
+        println!("Removing based on count: {:?} {}", accumulator, count);
         data.retain(|&x| {
             let bit = x >> i & 1;
-            bit == if *count <= 0 { 1 } else { 0 }
+            bit == (if count >= 0 { 1 } else { 0 })
         });
-        debug_data(i, &data);
+        debug_data(i as usize, &data);
+        if data.len() == 1 {
+            break;
+        }
     }
 
     if data.len() != 1 {
@@ -123,7 +130,7 @@ fn calculate_oxygen_generator_rating(report: &str) -> u32 {
 fn debug_data(i: usize, data: &Vec<u32>) {
     println!("bit {}", i);
     for item in data {
-        println!("{:b}", item);
+        println!("{:05b}", item);
     }
 }
 
@@ -138,11 +145,14 @@ mod tests {
 
         let oxygen = calculate_oxygen_generator_rating(input);
         assert_eq!(23, oxygen);
+    }
+
+    #[test]
+    fn test_co2_example() {
+        let input =
+            "00100\n11110\n10110\n10111\n10101\n01111\n00111\n11100\n10000\n11001\n00010\n01010";
 
         let co2 = calculate_co2_scrubber_rating(input);
         assert_eq!(10, co2);
-
-        let final_result = oxygen * co2;
-        assert_eq!(230, final_result);
     }
 }
