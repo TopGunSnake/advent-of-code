@@ -96,8 +96,16 @@ impl Segment {
                 ys.map(|y| Point { x, y }).collect_vec()
             }
             Orientation::Diagonal => {
-                // Ignore
-                Vec::new()
+                // Order matters, so we need to track if we reversed a range for construction.
+                let xs = match self.a.x <= self.b.x {
+                    true => (self.a.x..=self.b.x).collect_vec().into_iter(),
+                    false => (self.b.x..=self.a.x).rev().collect_vec().into_iter(),
+                };
+                let ys = match self.a.y <= self.b.y {
+                    true => (self.a.y..=self.b.y).collect_vec().into_iter(),
+                    false => (self.b.y..=self.a.y).rev().collect_vec().into_iter(),
+                };
+                xs.zip(ys).map(|(x, y)| Point { x, y }).collect_vec()
             }
         }
     }
