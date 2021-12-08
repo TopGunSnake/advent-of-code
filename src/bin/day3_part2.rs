@@ -9,7 +9,8 @@ fn main() {
 
     println!("{}", diagnostic_report);
 
-    let result = calculate_oxygen_generator_rating(&diagnostic_report) * calculate_co2_scrubber_rating(&diagnostic_report);
+    let result = calculate_oxygen_generator_rating(&diagnostic_report)
+        * calculate_co2_scrubber_rating(&diagnostic_report);
 
     println!("Final result: {}", result);
 }

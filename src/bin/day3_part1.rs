@@ -1,5 +1,5 @@
-use itertools::Itertools;
 use itertools::enumerate;
+use itertools::Itertools;
 use std::env;
 use std::fs;
 
@@ -15,7 +15,10 @@ fn main() {
 }
 
 fn calculate_power_consumption(report: &str) -> u32 {
-    let data = report.lines().map(|s| u32::from_str_radix(s, 2).unwrap()).collect_vec();
+    let data = report
+        .lines()
+        .map(|s| u32::from_str_radix(s, 2).unwrap())
+        .collect_vec();
     let line_width = report.lines().next().unwrap().len() as u32;
     let gamma_rate = get_gamma_rate(&data, line_width);
     let epsilon_rate = get_epsilon_rate(&data, line_width);
@@ -52,7 +55,7 @@ fn get_gamma_rate(report: &[u32], width: u32) -> u32 {
 }
 
 /// Returns a vector of counts of 1 against 0
-/// 
+///
 /// A field is positive if there were more 1's than 0's
 /// Order is big-endian (Vec[0] indicates the 1's place of the binary)
 fn accumulate_bit_counts(width: u32, report: &[u32]) -> Vec<i32> {
@@ -63,12 +66,11 @@ fn accumulate_bit_counts(width: u32, report: &[u32]) -> Vec<i32> {
                 1 => 1,
                 0 => -1,
                 _ => panic!("Bad logic in match"),
-            } 
+            }
         }
     }
     accumulator
 }
-
 
 #[cfg(test)]
 mod tests {

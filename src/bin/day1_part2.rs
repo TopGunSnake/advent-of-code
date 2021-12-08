@@ -1,6 +1,6 @@
+use itertools::Itertools;
 use std::env;
 use std::fs;
-use itertools::Itertools;
 
 fn main() {
     let filename = "day1_input.txt";
@@ -15,7 +15,10 @@ fn main() {
 fn count_increases(contents: &str) -> i32 {
     let mut count = 0;
 
-    let contents = contents.lines().map(|x| x.parse::<i32>().unwrap()).collect_vec();
+    let contents = contents
+        .lines()
+        .map(|x| x.parse::<i32>().unwrap())
+        .collect_vec();
     let sums = contents.windows(3).map(|x| x.to_vec().iter().sum::<i32>());
 
     for (s0, s1) in sums.tuple_windows() {
@@ -30,7 +33,6 @@ fn count_increases(contents: &str) -> i32 {
 mod tests {
     use crate::count_increases;
 
-
     #[test]
     fn test_example() {
         let example_string = "199\n200\n208\n210\n200\n207\n240\n269\n260\n263";
@@ -38,5 +40,4 @@ mod tests {
         let count = count_increases(example_string);
         assert_eq!(5, count);
     }
-
 }

@@ -95,7 +95,12 @@ struct Board {
 
 impl Board {
     fn unmarked_sum(&self) -> u32 {
-        let sum = self.board_numbers.iter().filter(|(_, x)| !x).map(|x| x.0).sum();
+        let sum = self
+            .board_numbers
+            .iter()
+            .filter(|(_, x)| !x)
+            .map(|x| x.0)
+            .sum();
         sum
     }
 

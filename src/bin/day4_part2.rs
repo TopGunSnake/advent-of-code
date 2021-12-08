@@ -43,11 +43,10 @@ fn simulate_boards(seq: &[u32], boards: &mut [Board]) -> (u32, u32) {
                     // Update the latest winner
                     winning_number = *number;
                     unmarked_sum = board.unmarked_sum();
-    
+
                     // println!("Winning Board: {:?}", board);
                     println!("Results: {} {}", winning_number, unmarked_sum);
                 }
-
             }
         }
     }
@@ -101,7 +100,12 @@ struct Board {
 
 impl Board {
     fn unmarked_sum(&self) -> u32 {
-        let sum = self.board_numbers.iter().filter(|(_, x)| !x).map(|x| x.0).sum();
+        let sum = self
+            .board_numbers
+            .iter()
+            .filter(|(_, x)| !x)
+            .map(|x| x.0)
+            .sum();
         sum
     }
 
