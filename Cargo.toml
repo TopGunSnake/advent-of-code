@@ -9,5 +9,7 @@ edition = "2021"
 itertools = "0.10.1"
 hex = "0.4.3"
 bitvec = "0.22.3"
+either = "1.6.1"
 [dev-dependencies]
 indoc = "1.0.3"
+test-case = "1.2.1"
