@@ -2,7 +2,6 @@ use itertools::Itertools;
 use std::collections::HashMap;
 use std::fs;
 
-
 fn main() {
     let filename = "day5_input.txt";
     let contents = fs::read_to_string(filename).expect("File read error");

@@ -20,7 +20,6 @@ fn do_the_thing(input: &str) -> u32 {
 
     let (winning_number, unmarked_sum) = simulate_boards(&sequence, &mut boards);
 
-    
     winning_number * unmarked_sum
 }
 
@@ -111,7 +110,7 @@ impl Board {
 
     fn mark(&mut self, number: u32) -> bool {
         let found = self.board_numbers.iter().find_position(|x| x.0 == number);
-        
+
         match found {
             Some((x, _)) => {
                 self.board_numbers[x].1 = true;

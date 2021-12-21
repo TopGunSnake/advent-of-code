@@ -75,8 +75,7 @@ impl Packet {
                         .sum::<usize>();
                     let mut start_of_next_packet = 7 + SIZE_FIELD_SIZE;
                     let mut packets = Vec::new();
-                    while start_of_next_packet
-                        < (7 + SIZE_FIELD_SIZE + internal_packets_total_size)
+                    while start_of_next_packet < (7 + SIZE_FIELD_SIZE + internal_packets_total_size)
                     {
                         let next_packet = Packet::new(&packet[start_of_next_packet..]);
                         start_of_next_packet += next_packet.size;

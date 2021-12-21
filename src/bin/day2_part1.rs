@@ -70,7 +70,7 @@ mod tests {
         up 3
         down 8
         forward 2"};
-        
+
         let result = travel_simulation(input_commands);
 
         assert_eq!(150, result);
