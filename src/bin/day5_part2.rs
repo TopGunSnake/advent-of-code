@@ -1,9 +1,6 @@
 use itertools::Itertools;
 use std::collections::HashMap;
-use std::env;
-use std::fmt::write;
 use std::fs;
-use std::io::Error;
 
 fn main() {
     let filename = "day5_input.txt";
@@ -144,7 +141,7 @@ impl Grid {
 
     fn overlaps(&self) -> u32 {
         let mut count = 0;
-        for (key, &value) in self.grid.iter() {
+        for (_key, &value) in self.grid.iter() {
             if value >= 2 {
                 count += 1;
             }
@@ -166,11 +163,11 @@ impl std::fmt::Display for Grid {
             // println!("x: {}, y: {}, output: {:?}", point.x, point.y, output);
             output[point.y as usize][point.x as usize] = value;
         }
-        write!(f, "\n[\n");
+        write!(f, "\n[\n")?;
         for row in output {
-            write!(f, " {:?}\n", row);
+            writeln!(f, " {:?}", row)?;
         }
-        write!(f, "]");
+        write!(f, "]")?;
 
         Ok(())
     }
@@ -179,10 +176,21 @@ impl std::fmt::Display for Grid {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use indoc::indoc;
 
     #[test]
     fn test_example() {
-        let input = "0,9 -> 5,9\n8,0 -> 0,8\n9,4 -> 3,4\n2,2 -> 2,1\n7,0 -> 7,4\n6,4 -> 2,0\n0,9 -> 2,9\n3,4 -> 1,4\n0,0 -> 8,8\n5,5 -> 8,2";
+        let input = indoc! {"
+        0,9 -> 5,9
+        8,0 -> 0,8
+        9,4 -> 3,4
+        2,2 -> 2,1
+        7,0 -> 7,4
+        6,4 -> 2,0
+        0,9 -> 2,9
+        3,4 -> 1,4
+        0,0 -> 8,8
+        5,5 -> 8,2"};
 
         let result = find_overlaps(input);
 
