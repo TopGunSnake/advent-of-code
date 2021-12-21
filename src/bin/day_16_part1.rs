@@ -21,39 +21,21 @@ struct Packet {
 
 impl Packet {
     fn new(packet: &BitSlice<Msb0, u8>) -> Self {
-        // dbg!(packet);
-        dbg!(packet.len());
-        // let version_number =
-        //     ((packet.get(0).unwrap()) << 2) + ((packet[1] as u8) << 1) + (packet[2] as u8);
         let version_number = packet[0..3]
             .iter()
-            .inspect(|b| println!("Version bits: {:?}", b))
             .enumerate()
             .map(|(i, b)| (*b as u8) << (2 - i))
             .sum::<u8>();
-        dbg!(&version_number);
         let packet_type_id = PacketType::from_bytes(&packet[3..6]);
-        dbg!(&packet_type_id);
 
         let (size, internal_packets) = match packet_type_id {
             PacketType::Literal => {
                 // This packet is only containing literal groups, building a number.
                 let mut index = 6; // Index of first bit of the group.
-                let mut number = 0u128;
                 loop {
-                    let data = packet[index + 1..=index + 4]
-                        .iter()
-                        .inspect(|b| println!("Literal Bits: {:?}", b))
-                        .enumerate()
-                        .map(|(i, b)| (*b as usize) << (3 - i))
-                        .sum::<usize>();
-                    dbg!(data);
-                    number <<= 4;
-                    number += data as u128;
-                    dbg!(number);
                     if packet[index] {
                         // We have another group.
-                        dbg!(index += 5);
+                        index += 5;
                     } else {
                         break;
                     }
@@ -68,7 +50,6 @@ impl Packet {
                         const SIZE_FIELD_SIZE: usize = 11;
                         let internal_packets_count = packet[7..7 + SIZE_FIELD_SIZE]
                             .iter()
-                            .inspect(|b| println!("Length Id 1 Bits: {:?}", b))
                             .enumerate()
                             .map(|(i, b)| (*b as usize) << (SIZE_FIELD_SIZE - 1 - i))
                             .sum::<usize>();
@@ -86,14 +67,13 @@ impl Packet {
                         const SIZE_FIELD_SIZE: usize = 15;
                         let internal_packets_total_size = packet[7..7 + SIZE_FIELD_SIZE]
                             .iter()
-                            .inspect(|b| println!("Length Id 0 Bits: {:?}", b))
                             .enumerate()
                             .map(|(i, b)| (*b as usize) << (SIZE_FIELD_SIZE - 1 - i))
                             .sum::<usize>();
                         let mut start_of_next_packet = 7 + SIZE_FIELD_SIZE;
                         let mut packets = Vec::new();
-                        while dbg!(start_of_next_packet)
-                            < dbg!(7 + SIZE_FIELD_SIZE + internal_packets_total_size)
+                        while start_of_next_packet
+                            < (7 + SIZE_FIELD_SIZE + internal_packets_total_size)
                         {
                             let next_packet = Packet::new(&packet[start_of_next_packet..]);
                             start_of_next_packet += next_packet.size;
@@ -160,13 +140,13 @@ fn do_the_thing(input: &str) -> u128 {
 
     let packet = Packet::new(&bytes);
 
-    packet.get_version_number_sum().try_into().unwrap()
+    packet.get_version_number_sum()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use indoc::indoc;
+
     #[test]
     fn test_example_1() {
         let input = "8A004A801A8002F478";
@@ -214,6 +194,6 @@ mod tests {
     fn test_operator_with_two_subpackets() {
         let input = "38006F45291200";
 
-        let result = do_the_thing(input);
+        let _result = do_the_thing(input);
     }
 }

@@ -1,5 +1,4 @@
 use itertools::Itertools;
-use std::env;
 use std::fs;
 
 #[derive(Default)]
@@ -61,10 +60,17 @@ fn travel_simulation(input_commands: &str) -> i32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use indoc::indoc;
 
     #[test]
     fn test_example() {
-        let input_commands = "forward 5\ndown 5\nforward 8\nup 3\ndown 8\nforward 2";
+        let input_commands = indoc! {"forward 5
+        down 5
+        forward 8
+        up 3
+        down 8
+        forward 2"};
+
         let result = travel_simulation(input_commands);
 
         assert_eq!(150, result);

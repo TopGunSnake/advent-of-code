@@ -1,4 +1,4 @@
-use std::{fs, iter::Sum};
+use std::fs;
 
 use bitvec::prelude::*;
 use itertools::Itertools;
@@ -15,7 +15,6 @@ fn main() {
 }
 
 struct Packet {
-    version_number: u8,
     size: usize, // How many bits long the packet is (included the sub packets).
     packet_type: PacketType,
     internal_packets: Option<Vec<Packet>>,
@@ -24,19 +23,7 @@ struct Packet {
 
 impl Packet {
     fn new(packet: &BitSlice<Msb0, u8>) -> Self {
-        // dbg!(packet);
-        dbg!(packet.len());
-        // let version_number =
-        //     ((packet.get(0).unwrap()) << 2) + ((packet[1] as u8) << 1) + (packet[2] as u8);
-        let version_number = packet[0..3]
-            .iter()
-            .inspect(|b| println!("Version bits: {:?}", b))
-            .enumerate()
-            .map(|(i, b)| (*b as u8) << (2 - i))
-            .sum::<u8>();
-        dbg!(&version_number);
         let packet_type_id = PacketType::from_bytes(&packet[3..6]);
-        dbg!(&packet_type_id);
 
         let (size, data, internal_packets) = match packet_type_id {
             PacketType::Literal => {
@@ -46,17 +33,14 @@ impl Packet {
                 loop {
                     let data = packet[index + 1..=index + 4]
                         .iter()
-                        .inspect(|b| println!("Literal Bits: {:?}", b))
                         .enumerate()
                         .map(|(i, b)| (*b as usize) << (3 - i))
                         .sum::<usize>();
-                    dbg!(data);
                     number <<= 4;
                     number += data as u128;
-                    dbg!(number);
                     if packet[index] {
                         // We have another group.
-                        dbg!(index += 5);
+                        index += 5;
                     } else {
                         break;
                     }
@@ -66,45 +50,39 @@ impl Packet {
             PacketType::Operator(_) => {
                 // An operator contains multiple internal packets.
                 let length_type_id = packet[6];
-                let packets = match length_type_id {
-                    true => {
-                        const SIZE_FIELD_SIZE: usize = 11;
-                        let internal_packets_count = packet[7..7 + SIZE_FIELD_SIZE]
-                            .iter()
-                            .inspect(|b| println!("Length Id 1 Bits: {:?}", b))
-                            .enumerate()
-                            .map(|(i, b)| (*b as usize) << (SIZE_FIELD_SIZE - 1 - i))
-                            .sum::<usize>();
-                        let mut start_of_next_packet = 7 + SIZE_FIELD_SIZE;
-                        let mut packets = Vec::new();
+                let packets = if length_type_id {
+                    const SIZE_FIELD_SIZE: usize = 11;
+                    let internal_packets_count = packet[7..7 + SIZE_FIELD_SIZE]
+                        .iter()
+                        .enumerate()
+                        .map(|(i, b)| (*b as usize) << (SIZE_FIELD_SIZE - 1 - i))
+                        .sum::<usize>();
+                    let mut start_of_next_packet = 7 + SIZE_FIELD_SIZE;
+                    let mut packets = Vec::new();
 
-                        for _ in 0..internal_packets_count {
-                            let next_packet = Packet::new(&packet[start_of_next_packet..]);
-                            start_of_next_packet += next_packet.size;
-                            packets.push(next_packet);
-                        }
-                        packets
+                    for _ in 0..internal_packets_count {
+                        let next_packet = Packet::new(&packet[start_of_next_packet..]);
+                        start_of_next_packet += next_packet.size;
+                        packets.push(next_packet);
                     }
-                    false => {
-                        const SIZE_FIELD_SIZE: usize = 15;
-                        let internal_packets_total_size = packet[7..7 + SIZE_FIELD_SIZE]
-                            .iter()
-                            .inspect(|b| println!("Length Id 0 Bits: {:?}", b))
-                            .enumerate()
-                            .map(|(i, b)| (*b as usize) << (SIZE_FIELD_SIZE - 1 - i))
-                            .sum::<usize>();
-                        let mut start_of_next_packet = 7 + SIZE_FIELD_SIZE;
-                        let mut packets = Vec::new();
-                        while dbg!(start_of_next_packet)
-                            < dbg!(7 + SIZE_FIELD_SIZE + internal_packets_total_size)
-                        {
-                            let next_packet = Packet::new(&packet[start_of_next_packet..]);
-                            start_of_next_packet += next_packet.size;
-                            packets.push(next_packet);
-                        }
+                    packets
+                } else {
+                    const SIZE_FIELD_SIZE: usize = 15;
+                    let internal_packets_total_size = packet[7..7 + SIZE_FIELD_SIZE]
+                        .iter()
+                        .enumerate()
+                        .map(|(i, b)| (*b as usize) << (SIZE_FIELD_SIZE - 1 - i))
+                        .sum::<usize>();
+                    let mut start_of_next_packet = 7 + SIZE_FIELD_SIZE;
+                    let mut packets = Vec::new();
+                    while start_of_next_packet < (7 + SIZE_FIELD_SIZE + internal_packets_total_size)
+                    {
+                        let next_packet = Packet::new(&packet[start_of_next_packet..]);
+                        start_of_next_packet += next_packet.size;
+                        packets.push(next_packet);
+                    }
 
-                        packets
-                    }
+                    packets
                 };
 
                 (
@@ -118,25 +96,11 @@ impl Packet {
         };
 
         Self {
-            version_number,
             size,
             internal_packets,
             packet_type: packet_type_id,
             data,
         }
-    }
-
-    fn get_version_number_sum(&self) -> u128 {
-        self.version_number as u128
-            + self
-                .internal_packets
-                .as_ref()
-                .map_or(0, |internal_packets| {
-                    internal_packets
-                        .iter()
-                        .map(|ip| ip.get_version_number_sum())
-                        .sum()
-                })
     }
 
     fn execute(&self) -> u128 {

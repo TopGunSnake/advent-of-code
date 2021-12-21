@@ -1,5 +1,4 @@
 use itertools::Itertools;
-use std::env;
 use std::fs;
 
 fn main() {
@@ -32,10 +31,20 @@ fn count_increases(contents: &str) -> i32 {
 #[cfg(test)]
 mod tests {
     use crate::count_increases;
-
+    use indoc::indoc;
     #[test]
     fn test_example() {
-        let example_string = "199\n200\n208\n210\n200\n207\n240\n269\n260\n263";
+        let example_string = indoc! {"
+        199
+        200
+        208
+        210
+        200
+        207
+        240
+        269
+        260
+        263"};
         println!("{}", example_string);
         let count = count_increases(example_string);
         assert_eq!(5, count);

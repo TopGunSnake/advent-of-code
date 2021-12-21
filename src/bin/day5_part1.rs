@@ -1,9 +1,6 @@
 use itertools::Itertools;
 use std::collections::HashMap;
-use std::env;
-use std::fmt::write;
 use std::fs;
-use std::io::Error;
 
 fn main() {
     let filename = "day5_input.txt";
@@ -96,7 +93,6 @@ impl Segment {
                 ys.map(|y| Point { x, y }).collect_vec()
             }
             Orientation::Diagonal => {
-                // Ignore
                 Vec::new()
             }
         }
@@ -136,7 +132,7 @@ impl Grid {
 
     fn overlaps(&self) -> u32 {
         let mut count = 0;
-        for (key, &value) in self.grid.iter() {
+        for (_key, &value) in self.grid.iter() {
             if value >= 2 {
                 count += 1;
             }
@@ -158,11 +154,11 @@ impl std::fmt::Display for Grid {
             // println!("x: {}, y: {}, output: {:?}", point.x, point.y, output);
             output[point.y as usize][point.x as usize] = value;
         }
-        write!(f, "\n[\n");
+        write!(f, "\n[\n")?;
         for row in output {
-            write!(f, " {:?}\n", row);
+            writeln!(f, " {:?}", row)?;
         }
-        write!(f, "]");
+        write!(f, "]")?;
 
         Ok(())
     }
@@ -178,6 +174,6 @@ mod tests {
 
         let result = find_overlaps(input);
 
-        assert_eq!(12, result);
+        assert_eq!(5, result);
     }
 }
