@@ -1,6 +1,4 @@
-use itertools::enumerate;
 use itertools::Itertools;
-use std::env;
 use std::fs;
 
 fn main() {
@@ -75,11 +73,22 @@ fn accumulate_bit_counts(width: u32, report: &[u32]) -> Vec<i32> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use indoc::indoc;
 
     #[test]
     fn test_example() {
-        let input =
-            "00100\n11110\n10110\n10111\n10101\n01111\n00111\n11100\n10000\n11001\n00010\n01010";
+        let input = indoc! {"00100
+        11110
+        10110
+        10111
+        10101
+        01111
+        00111
+        11100
+        10000
+        11001
+        00010
+        01010"};
 
         let result = calculate_power_consumption(input);
         assert_eq!(198, result);

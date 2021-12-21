@@ -1,6 +1,4 @@
-use itertools::enumerate;
 use itertools::Itertools;
-use std::env;
 use std::fs;
 
 fn main() {
@@ -13,46 +11,6 @@ fn main() {
         * calculate_co2_scrubber_rating(&diagnostic_report);
 
     println!("Final result: {}", result);
-}
-
-fn calculate_power_consumption(report: &str) -> u32 {
-    let data = report
-        .lines()
-        .map(|s| u32::from_str_radix(s, 2).unwrap())
-        .collect_vec();
-    let line_width = report.lines().next().unwrap().len() as u32;
-    let gamma_rate = get_gamma_rate(&data, line_width);
-    let epsilon_rate = get_epsilon_rate(&data, line_width);
-
-    gamma_rate * epsilon_rate
-}
-
-/// Converts by using least common bit values
-fn get_epsilon_rate(report: &[u32], width: u32) -> u32 {
-    let accumulator = accumulate_bit_counts(width, report);
-
-    let mut result = 0u32;
-    for (i, &bit) in accumulator.iter().enumerate() {
-        if bit < 0 {
-            result += 1 << i;
-        }
-    }
-
-    result
-}
-
-/// Converts by using most common bit values
-fn get_gamma_rate(report: &[u32], width: u32) -> u32 {
-    let accumulator = accumulate_bit_counts(width, report);
-
-    let mut result = 0u32;
-    for (i, &bit) in accumulator.iter().enumerate() {
-        if bit > 0 {
-            result += 1 << i;
-        }
-    }
-
-    result
 }
 
 /// Returns a vector of counts of 1 against 0
@@ -128,7 +86,7 @@ fn calculate_oxygen_generator_rating(report: &str) -> u32 {
     }
 }
 
-fn debug_data(i: usize, data: &Vec<u32>) {
+fn debug_data(i: usize, data: &[u32]) {
     println!("bit {}", i);
     for item in data {
         println!("{:05b}", item);
@@ -138,11 +96,22 @@ fn debug_data(i: usize, data: &Vec<u32>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use indoc::indoc;
 
     #[test]
     fn test_example() {
-        let input =
-            "00100\n11110\n10110\n10111\n10101\n01111\n00111\n11100\n10000\n11001\n00010\n01010";
+        let input = indoc! {"00100
+        11110
+        10110
+        10111
+        10101
+        01111
+        00111
+        11100
+        10000
+        11001
+        00010
+        01010"};
 
         let oxygen = calculate_oxygen_generator_rating(input);
         assert_eq!(23, oxygen);
@@ -150,8 +119,18 @@ mod tests {
 
     #[test]
     fn test_co2_example() {
-        let input =
-            "00100\n11110\n10110\n10111\n10101\n01111\n00111\n11100\n10000\n11001\n00010\n01010";
+        let input = indoc! {"00100
+        11110
+        10110
+        10111
+        10101
+        01111
+        00111
+        11100
+        10000
+        11001
+        00010
+        01010"};
 
         let co2 = calculate_co2_scrubber_rating(input);
         assert_eq!(10, co2);
