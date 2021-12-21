@@ -27,41 +27,6 @@ enum ChunkDelimiterType {
     Caret,
 }
 
-impl ChunkDelimiterType {
-    fn as_char(&self, open: bool) -> char {
-        match self {
-            ChunkDelimiterType::Parenthesis => {
-                if open {
-                    '('
-                } else {
-                    ')'
-                }
-            }
-            ChunkDelimiterType::Bracket => {
-                if open {
-                    '['
-                } else {
-                    ']'
-                }
-            }
-            ChunkDelimiterType::Brace => {
-                if open {
-                    '{'
-                } else {
-                    '}'
-                }
-            }
-            ChunkDelimiterType::Caret => {
-                if open {
-                    '<'
-                } else {
-                    '>'
-                }
-            }
-        }
-    }
-}
-
 impl ChunkDelimiter {
     fn from_char(c: char) -> Self {
         match c {
@@ -108,10 +73,6 @@ impl ChunkDelimiter {
     fn close(&self, closer: ChunkDelimiter) -> bool {
         self.character == closer.character && self.open && !closer.open
     }
-
-    fn as_char(&self) -> char {
-        self.character.as_char(self.open)
-    }
 }
 
 fn do_the_thing(input: &str) -> u128 {
@@ -121,7 +82,7 @@ fn do_the_thing(input: &str) -> u128 {
         .map(calculate_auto_complete) // Calculate individual line scores for auto completion
         .sorted()
         .collect_vec();
-    let total_score = scores.get(scores.len()/2).unwrap();
+    let total_score = scores.get(scores.len() / 2).unwrap();
     *total_score
 }
 
