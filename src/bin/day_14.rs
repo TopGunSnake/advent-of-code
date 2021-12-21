@@ -56,6 +56,11 @@ impl PolymerPair {
     fn increment(&mut self, inc: u128) {
         self.count += inc;
     }
+
+    // decrements this pair's count
+    fn decrement(&mut self, dec: u128) {
+        self.count -= dec;
+    }
 }
 
 impl Polymer {
@@ -97,18 +102,21 @@ impl Polymer {
         let mut rules = self.rules.clone();
 
         for pair in self.rules.values() {
+            println!("Processing Pair: {:?}, count {}", pair.pair, pair.count);
             if let Some((left, right)) = pair.expand() {
                 // This pair in the map contributes to increasing the polymer.
                 let count = pair.count;
 
-                Self::update_rules_map(&mut rules, left, count);
-                Self::update_rules_map(&mut rules, right, count);
+                Self::update_rules_map(&mut rules, pair.pair, count, false); // We remove each pair from the original count.
+                Self::update_rules_map(&mut rules, left, count, true); // We add each new left pair to the count.
+                Self::update_rules_map(&mut rules, right, count, true); // We add each new right pair to the count.
             }
         }
         Self { rules }
     }
 
     fn get_result(&self) -> u128 {
+        todo!("This function currently counts the PolymerPairs. Instead, we need to count the specific instances in the pairs.");
         // Gets the quantity of most common and least commons characters in data, and returns the difference.
         if let Some((min, max)) = self
             .rules
@@ -117,7 +125,7 @@ impl Polymer {
             .minmax()
             .into_option()
         {
-            (max - min).try_into().unwrap()
+            dbg!(max) - dbg!(min)
         } else {
             0
         }
@@ -127,10 +135,15 @@ impl Polymer {
         rules: &mut HashMap<(char, char), PolymerPair>,
         pair: (char, char),
         count: u128,
+        increment: bool,
     ) {
         if let Some(x) = rules.get_mut(&pair) {
-            // We have this rule in our map, we need to increment it.
-            x.increment(count);
+            // We have this rule in our map, we need to adjust it.
+            if increment {
+                x.increment(count);
+            } else {
+                x.decrement(count);
+            }
         } else {
             // This rule is not defined, so we need to add the pair manually.
             let new_pair = PolymerPair {
@@ -178,10 +191,13 @@ mod tests {
         CC -> N
         CN -> C"};
 
+        // let result = do_the_thing(input, 3);
+        // assert_eq!(1, result);
+
         let result = do_the_thing(input, 10);
         assert_eq!(1588, result);
 
-        let result = do_the_thing(input, 40);
-        assert_eq!(2188189693529, result);
+        // let result = do_the_thing(input, 40);
+        // assert_eq!(2188189693529, result);
     }
 }
