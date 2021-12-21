@@ -1,9 +1,6 @@
-use std::{
-    collections::{HashMap, HashSet},
-    fs,
-};
+use std::{collections::HashMap, fs, iter::once};
 
-use itertools::{zip, Itertools};
+use itertools::Itertools;
 
 fn main() {
     let filename = "day14_input.txt";
@@ -11,7 +8,7 @@ fn main() {
 
     println!("{}", contents);
 
-    let result = do_the_thing(&contents, 10);
+    let result = do_the_thing(&contents, 40);
 
     println!("Result {}", result);
 }
@@ -29,6 +26,8 @@ fn do_the_thing(input: &str, iters: u8) -> u128 {
 #[derive(Debug)]
 struct Polymer {
     rules: HashMap<(char, char), PolymerPair>,
+    start: char,
+    end: char,
 }
 
 // Defines how a pair inserts, as well as track counts.
@@ -69,7 +68,8 @@ impl Polymer {
 
         let mut lines = input.lines();
         let data = lines.next().unwrap().chars().collect_vec();
-
+        let start = *data.first().unwrap();
+        let end = *data.last().unwrap();
         let rule_regex = Regex::new(r#"([A-Z]{1})([A-Z]{1}) -> ([A-Z]{1})"#).unwrap();
 
         let mut rules = lines
@@ -95,7 +95,7 @@ impl Polymer {
             };
         }
 
-        Self { rules }
+        Self { rules, start, end }
     }
 
     fn iterate(self) -> Self {
@@ -112,16 +112,33 @@ impl Polymer {
                 Self::update_rules_map(&mut rules, right, count, true); // We add each new right pair to the count.
             }
         }
-        Self { rules }
+        Self { rules, ..self }
     }
 
+    /// Gets the quantity of most common and least commons characters in data, and returns the difference.
     fn get_result(&self) -> u128 {
-        todo!("This function currently counts the PolymerPairs. Instead, we need to count the specific instances in the pairs.");
-        // Gets the quantity of most common and least commons characters in data, and returns the difference.
         if let Some((min, max)) = self
             .rules
             .iter()
-            .map(|(_, v)| v.count)
+            .flat_map(|(&(left, right), pair)| {
+                once((left, pair.count)).chain(once((right, pair.count)))
+            })
+            .sorted_by_key(|&(c, _count)| c)
+            .coalesce(|previous, current| {
+                if previous.0 == current.0 {
+                    // characters match
+                    Ok((previous.0, previous.1 + current.1))
+                } else {
+                    Err((previous, current))
+                }
+            }) // This gets us a (char, u128) iterator of total counts.
+            .map(|(c, count)| {
+                if c == self.start || c == self.end {
+                    (count - 1) / 2 + 1
+                } else {
+                    count / 2
+                }
+            }) // Reduce all character counts by half, with exception of start and end.
             .minmax()
             .into_option()
         {
@@ -160,14 +177,6 @@ impl Polymer {
 mod tests {
     use super::*;
     use indoc::indoc;
-    use test_case::test_case;
-
-    // #[test_case()]
-    // fn test_specific_cases(input: &str, expected: &str) {
-    //     let result = calculate_auto_complete(input);
-
-    //     assert_eq!(expected, result);
-    // }
 
     #[test]
     fn test_example() {
@@ -197,7 +206,7 @@ mod tests {
         let result = do_the_thing(input, 10);
         assert_eq!(1588, result);
 
-        // let result = do_the_thing(input, 40);
-        // assert_eq!(2188189693529, result);
+        let result = do_the_thing(input, 40);
+        assert_eq!(2188189693529, result);
     }
 }
