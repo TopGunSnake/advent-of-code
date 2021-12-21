@@ -1,5 +1,3 @@
-use itertools::Itertools;
-use std::env;
 use std::fs;
 
 fn main() {
