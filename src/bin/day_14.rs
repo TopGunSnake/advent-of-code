@@ -1,4 +1,7 @@
-use std::fs;
+use std::{
+    collections::{HashMap, HashSet},
+    fs,
+};
 
 use itertools::{zip, Itertools};
 
@@ -18,15 +21,41 @@ fn do_the_thing(input: &str, iters: u8) -> u128 {
 
     for i in 0..iters {
         poly = poly.iterate();
-        println!("Processing step {}", i+1);
+        println!("Processing step {}", i + 1);
     }
     poly.get_result()
 }
 
 #[derive(Debug)]
 struct Polymer {
-    data: Vec<char>,
-    rules: Vec<(char, char, char)>,
+    rules: HashMap<(char, char), PolymerPair>,
+}
+
+// Defines how a pair inserts, as well as track counts.
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+struct PolymerPair {
+    pair: (char, char),
+    insert_result: Option<char>,
+    count: u128,
+}
+
+impl PolymerPair {
+    /// Expands this polymer pair into the left and right pairs.
+    /// Returns None if this pair doesn't expand.
+    fn expand(&self) -> Option<((char, char), (char, char))> {
+        if self.insert_result.is_some() {
+            let left = (self.pair.0, self.insert_result.unwrap());
+            let right = (self.insert_result.unwrap(), self.pair.1);
+            Some((left, right))
+        } else {
+            None
+        }
+    }
+
+    // increments this pair's count
+    fn increment(&mut self, inc: u128) {
+        self.count += inc;
+    }
 }
 
 impl Polymer {
@@ -35,67 +64,81 @@ impl Polymer {
 
         let mut lines = input.lines();
         let data = lines.next().unwrap().chars().collect_vec();
+
         let rule_regex = Regex::new(r#"([A-Z]{1})([A-Z]{1}) -> ([A-Z]{1})"#).unwrap();
 
-        let rules = lines
+        let mut rules = lines
             .filter_map(|s| rule_regex.captures(s))
             .map(|cap| {
+                let left = cap.get(1).unwrap().as_str().chars().next().unwrap();
+                let right = cap.get(2).unwrap().as_str().chars().next().unwrap();
+                let insert_result = cap.get(3).unwrap().as_str().chars().next();
                 (
-                    cap.get(1).unwrap().as_str().chars().next().unwrap(),
-                    cap.get(2).unwrap().as_str().chars().next().unwrap(),
-                    cap.get(3).unwrap().as_str().chars().next().unwrap(),
+                    (left, right),
+                    PolymerPair {
+                        pair: (left, right),
+                        insert_result,
+                        count: 0,
+                    },
                 )
             })
-            .collect_vec();
-        Self { data, rules }
+            .collect::<HashMap<_, _>>();
+
+        for (left, right) in data.into_iter().tuple_windows() {
+            if let Some(pair) = rules.get_mut(&(left, right)) {
+                pair.increment(1);
+            };
+        }
+
+        Self { rules }
     }
 
     fn iterate(self) -> Self {
-        let rules = self.rules;
+        let mut rules = self.rules.clone();
 
-        let inserts = self
-            .data
-            .iter()
-            .tuple_windows()
-            .map(|(&left, &right)| {
-                let insert = rules
-                    .iter()
-                    .filter_map(|&rule| match rule {
-                        (l, r, insert) if l == left && r == right => Some(insert),
-                        _ => None,
-                    })
-                    .at_most_one()
-                    .unwrap();
-                insert
-            })
-            .collect_vec(); // Now I've got a vector of Option<char>, where each can be inserted between the characters.
+        for pair in self.rules.values() {
+            if let Some((left, right)) = pair.expand() {
+                // This pair in the map contributes to increasing the polymer.
+                let count = pair.count;
 
-        let mut data = Vec::new();
-        for (d, i) in zip(self.data.iter(), inserts.iter()) {
-            data.push(*d); // We push the character,
-            if let Some(c) = *i {
-                data.push(c)
-            } // If we have an insert, we push it
+                Self::update_rules_map(&mut rules, left, count);
+                Self::update_rules_map(&mut rules, right, count);
+            }
         }
-        data.push(*self.data.last().unwrap()); // Since the inserts are from slices, there are n-1 in inserts, and n in data, so we add the last character.
-
-        Self { data, rules }
+        Self { rules }
     }
 
     fn get_result(&self) -> u128 {
         // Gets the quantity of most common and least commons characters in data, and returns the difference.
-        let groups = self.data.iter().sorted().group_by(|&x| x);
-
-        if let Some((min, max)) = groups
-            .into_iter()
-            .map(|(key, group)| group.count())
-            // .inspect(|g| println!("Group Counts: {:?}", g))
-            .minmax_by_key(|&count| count)
+        if let Some((min, max)) = self
+            .rules
+            .iter()
+            .map(|(_, v)| v.count)
+            .minmax()
             .into_option()
         {
             (max - min).try_into().unwrap()
         } else {
             0
+        }
+    }
+
+    fn update_rules_map(
+        rules: &mut HashMap<(char, char), PolymerPair>,
+        pair: (char, char),
+        count: u128,
+    ) {
+        if let Some(x) = rules.get_mut(&pair) {
+            // We have this rule in our map, we need to increment it.
+            x.increment(count);
+        } else {
+            // This rule is not defined, so we need to add the pair manually.
+            let new_pair = PolymerPair {
+                pair,
+                insert_result: None,
+                count: 0,
+            };
+            rules.insert(pair, new_pair);
         }
     }
 }
