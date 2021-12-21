@@ -93,7 +93,6 @@ impl Segment {
                 ys.map(|y| Point { x, y }).collect_vec()
             }
             Orientation::Diagonal => {
-                // Ignore
                 Vec::new()
             }
         }
@@ -175,6 +174,6 @@ mod tests {
 
         let result = find_overlaps(input);
 
-        assert_eq!(12, result);
+        assert_eq!(5, result);
     }
 }
