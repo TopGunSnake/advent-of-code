@@ -1,6 +1,6 @@
 use itertools::Itertools;
 use regex::Regex;
-use std::{fs, thread, time};
+use std::fs;
 
 fn main() {
     let filename = "day21_input.txt";
@@ -139,7 +139,7 @@ mod tests {
     fn test_start_at_10() {
         let mut player = Player::new(10);
 
-        let roll = 1+2+3;
+        let roll = 1 + 2 + 3;
         player.move_player(roll);
 
         assert_eq!(player.position, 6);
